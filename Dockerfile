@@ -9,7 +9,7 @@ RUN go build \
     -o /tmp/bin
 # run stage
 FROM scratch
-LABEL maintainer="dev@jpillora.com"
+LABEL maintainer="hi@imzami.com"
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 WORKDIR /app
 COPY --from=build /tmp/bin /app/bin

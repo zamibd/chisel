@@ -1,0 +1,19 @@
+# 🔒 Git and GitHub metadata
+.git/
+.github/
+
+# 🧪 Tests and examples
+test/
+example/
+
+
+# 📄 Docs and license (not needed in image)
+README.md
+LICENSE
+
+# 🛠️ Build and dev tooling
+Makefile
+.gitignore
+
+# 🧮 Go module cache (already used during build)
+go.sum
