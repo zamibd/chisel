@@ -15,5 +15,4 @@ LICENSE
 Makefile
 .gitignore
 
-# 🧮 Go module cache (already used during build)
-go.sum
+# 🧮 Go module cache (already used during build) 
