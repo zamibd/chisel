@@ -14,18 +14,24 @@ jobs:
           go-version: stable
           check-latest: true
 
-      # Run tests natively on the runner arch
       - name: Test (native)
         run: go test ./...
 
-      # Cross-compile linux/386 without cgo
-      - name: Build linux/386 (CGO disabled)
+      - name: Install i686-linux-musl-gcc (cross)
+        run: |
+          set -eux
+          curl -L https://musl.cc/i686-linux-musl-cross.tgz | tar -xz
+          echo "$PWD/i686-linux-musl-cross/bin" >> $GITHUB_PATH
+
+      - name: Build linux/386 (musl static with cgo)
         run: |
           mkdir -p dist
-          CGO_ENABLED=0 GOOS=linux GOARCH=386 \
-            go build -trimpath -ldflags "-s -w" \
-            -o dist/chisel-linux-386
-          file dist/chisel-linux-386
+          CC=i686-linux-musl-gcc \
+          CGO_ENABLED=1 GOOS=linux GOARCH=386 \
+          go build -trimpath \
+            -ldflags="-s -w -linkmode external -extldflags '-static'" \
+            -o dist/chisel-linux-386-musl
+          file dist/chisel-linux-386-musl
           ls -lh dist
 
       - uses: actions/upload-artifact@v4
