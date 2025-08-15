@@ -4,37 +4,41 @@ on:
   workflow_dispatch:
 
 jobs:
-  ci:
+  test:
+    name: Build & Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-go@v5
+      - name: Set up Go
+        uses: actions/setup-go@v3
         with:
           go-version: stable
           check-latest: true
 
-      - name: Test (native)
+      - name: Install build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y musl-tools gcc-multilib
+
+      - name: Run tests
         run: go test ./...
 
-      - name: Install i686-linux-musl-gcc (cross)
+      - name: Build
         run: |
-          set -eux
-          curl -L https://musl.cc/i686-linux-musl-cross.tgz | tar -xz
-          echo "$PWD/i686-linux-musl-cross/bin" >> $GITHUB_PATH
-
-      - name: Build linux/386 (musl static with cgo)
-        run: |
-          mkdir -p dist
-          CC=i686-linux-musl-gcc \
-          CGO_ENABLED=1 GOOS=linux GOARCH=386 \
-          go build -trimpath \
-            -ldflags="-s -w -linkmode external -extldflags '-static'" \
-            -o dist/chisel-linux-386-musl
-          file dist/chisel-linux-386-musl
-          ls -lh dist
+          CC=musl-gcc \
+            CGO_ENABLED=1 \
+            GOOS=linux \
+            GOARCH=386 \
+            go build \
+              -ldflags="-s -w -linkmode external -extldflags '-static'" \
+              -v .
+          ls -al
 
       - uses: actions/upload-artifact@v4
         with:
-          name: chisel-binaries
-          path: dist/*
+          name: chisel
+          path: ./*
