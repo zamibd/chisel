@@ -1,0 +1,42 @@
+name: CI
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  # ================
+  # BUILD AND TEST JOB
+  # ================
+  test:
+    name: Build & Test
+    strategy:
+      matrix:
+        # optionally test/build across multiple platforms/Go-versions
+        go-version: ["stable"] # '1.16', '1.17', '1.18,
+        platform: [macos-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+          check-latest: true
+      - name: Build
+        run: |
+          brew tap messense/macos-cross-toolchains
+          brew install i686-unknown-linux-musl
+          CC=i686-linux-musl-gcc \
+            CGO_ENABLED=1 \
+            GOOS=linux \
+            GOARCH=386 \
+            go build \
+                -ldflags="-s -w -linkmode external -extldflags '-static'" \
+                -v .
+          ls -al
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chisel
+          path: .
