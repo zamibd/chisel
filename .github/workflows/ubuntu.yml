@@ -4,37 +4,31 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-linux-386:
+  ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
+      - uses: actions/setup-go@v5
         with:
           go-version: stable
           check-latest: true
 
-      - name: Install 386 musl cross toolchain
-        run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install -y musl-tools gcc-multilib libc6-dev-i386
+      # Run tests natively on the runner arch
+      - name: Test (native)
+        run: go test ./...
 
-      - name: Build Linux 386 static binary
+      # Cross-compile linux/386 without cgo
+      - name: Build linux/386 (CGO disabled)
         run: |
-          CC="musl-gcc -m32" \
-          CGO_ENABLED=1 \
-          GOOS=linux \
-          GOARCH=386 \
-          go build \
-            -ldflags="-s -w -linkmode external -extldflags '-static'" \
-            -v .
-          file ./$(basename $(go list -m))
-          ls -lh
+          mkdir -p dist
+          CGO_ENABLED=0 GOOS=linux GOARCH=386 \
+            go build -trimpath -ldflags "-s -w" \
+            -o dist/chisel-linux-386
+          file dist/chisel-linux-386
+          ls -lh dist
 
       - uses: actions/upload-artifact@v4
         with:
-          name: chisel-linux-386
-          path: ./*
+          name: chisel-binaries
+          path: dist/*
