@@ -5,12 +5,10 @@ on:
 
 jobs:
   test:
-    name: Build & Test on Ubuntu
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: ["stable"] # or specific versions like "1.21", "1.22"
-        platform: [ubuntu-latest]
-    runs-on: ${{ matrix.platform }}
+        go-version: ["stable"]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -23,12 +21,12 @@ jobs:
           go-version: ${{ matrix.go-version }}
           check-latest: true
 
-      - name: Install build dependencies
+      - name: Install musl cross toolchain for 386
         run: |
           sudo apt-get update
-          sudo apt-get install -y musl-tools gcc-multilib
+          sudo apt-get install -y gcc-multilib musl-tools
 
-      - name: Build (Linux 386 static)
+      - name: Build Linux 386 static binary
         run: |
           CC="musl-gcc" \
           CGO_ENABLED=1 \
